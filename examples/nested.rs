@@ -1,17 +1,14 @@
 use std::collections::HashMap;
 
-use dispersed_iterators::{DispersedIterator, NestedDispersedIterator};
+use dispersed_iterators::DispersedIterator;
 
 fn main() {
     let mut container = Container {
         indices: vec![1, 2],
         map: HashMap::from([(1, "hello".to_owned()), (2, "world".to_owned())]),
     };
-    let mut indices = Indices(0);
-    let mut nested_iter = TextByIndexMut; // we don't give any of them the container
-    while let Some(value) =
-        DispersedIterator::next(&mut nested_iter, (&mut container, &mut indices))
-    {
+    let mut nested_iter = TextByIndexMut(Indices(0)); // we don't give any of them the container
+    while let Some(value) = nested_iter.next(&mut container) {
         println!("{value}");
     }
 }
@@ -27,25 +24,20 @@ impl DispersedIterator for Indices {
     type Item<'a> = &'a i32;
     type Part<'a> = &'a Container;
 
-    fn next<'a: 'b, 'b>(&mut self, part: Self::Part<'a>) -> Option<Self::Item<'b>> {
+    fn next<'a>(&mut self, part: Self::Part<'a>) -> Option<Self::Item<'a>> {
         let index = part.indices.get(self.0);
         self.0 += 1;
         index
     }
 }
 
-struct TextByIndexMut;
+struct TextByIndexMut(Indices);
 
-impl NestedDispersedIterator for TextByIndexMut {
+impl DispersedIterator for TextByIndexMut {
     type Item<'a> = &'a String;
-    type Inner<'a> = &'a mut Indices; // TODO: Don't specify it here directly
     type Part<'a> = &'a mut Container;
 
-    fn next<'a: 'b, 'b>(
-        &mut self,
-        part: Self::Part<'a>,
-        inner: Self::Inner<'a>,
-    ) -> Option<Self::Item<'b>> {
-        inner.next(part).and_then(|index| part.map.get(index))
+    fn next<'a>(&mut self, part: Self::Part<'a>) -> Option<Self::Item<'a>> {
+        self.0.next(part).and_then(|index| part.map.get(index))
     }
 }
