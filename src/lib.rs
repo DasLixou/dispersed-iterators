@@ -1,3 +1,5 @@
+pub mod wrapped;
+
 pub trait DispersedIter {
     type Item<'a>;
     type Part<'a>;
