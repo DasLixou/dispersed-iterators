@@ -1,15 +1,15 @@
-use std::{collections::HashMap, marker::PhantomData};
+use std::collections::HashMap;
 
 use dispersed_iterators::DispersedIterator;
 
 fn main() {
-    let container = Container {
+    let mut container = Container {
         indices: vec![1, 2],
         map: HashMap::from([(1, "hello".to_owned()), (2, "world".to_owned())]),
     };
-    let mut nested_iter = TextByIndex(Indices(0, PhantomData), PhantomData); // we don't give any of them the container
-    while let Some(value) = nested_iter.next(&container) {
-        //                                             ^^^^ instead, we provide it here
+    let mut indices = Indices(0);
+    let mut nested_iter = TextByIndexMut; // we don't give any of them the container
+    while let Some(value) = nested_iter.next((&mut container, &mut indices)) {
         println!("{value}");
     }
 }
@@ -19,31 +19,29 @@ struct Container {
     pub map: HashMap<i32, String>,
 }
 
-struct Indices<'p>(usize, PhantomData<&'p ()>);
+struct Indices(usize);
 
-impl<'p> DispersedIterator for Indices<'p> {
-    type Item = i32;
-    type Part = &'p Container;
+impl DispersedIterator for Indices {
+    type Item<'a> = &'a i32;
+    type Part<'a> = &'a Container;
 
-    fn next(&mut self, part: Self::Part) -> Option<Self::Item> {
+    fn next<'a: 'b, 'b>(&mut self, part: Self::Part<'a>) -> Option<Self::Item<'b>> {
         let index = part.indices.get(self.0);
         self.0 += 1;
-        index.cloned()
+        index
     }
 }
 
-struct TextByIndex<'p, I: DispersedIterator<Item = i32, Part = &'p Container>>(
-    I,
-    PhantomData<&'p ()>,
-);
+struct TextByIndexMut;
 
-impl<'p, I: DispersedIterator<Item = i32, Part = &'p Container>> DispersedIterator
-    for TextByIndex<'p, I>
-{
-    type Item = &'p String;
-    type Part = &'p Container;
+impl DispersedIterator for TextByIndexMut {
+    type Item<'a> = &'a String;
+    type Part<'a> = (&'a mut Container, &'a mut Indices); // TODO: Don't specify it here directly
 
-    fn next(&mut self, part: Self::Part) -> Option<Self::Item> {
-        self.0.next(part).and_then(|index| part.map.get(&index))
+    fn next<'a: 'b, 'b>(&mut self, part: Self::Part<'a>) -> Option<Self::Item<'b>> {
+        let (container, inner) = part;
+        inner
+            .next(container)
+            .and_then(|index| container.map.get(index))
     }
 }
