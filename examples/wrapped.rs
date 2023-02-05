@@ -1,19 +1,22 @@
-use dispersed_iterators::{wrapped::WrappedIter, DispersedIter};
+use dispersed_iterators::DispersedIter;
 
 fn main() {
     let vec = vec![1, 2, 3, 4];
+    // a dispersed iterator
     let mut multiplier = Multiplier(0, 3); // multiply value by 3
     while let Some(multiplied) = multiplier.next(&vec) {
         println!("{multiplied}");
     }
     // and now with all the utilities from `Iterator` by wrapping:
-    let wrapped = WrappedIter {
-        value: &vec,
-        inner: Multiplier(0, 3),
-    };
+    let wrapped = Multiplier(0, 3).into_wrapped(&vec);
     let multiplied = wrapped.collect::<Vec<i32>>();
     for x in multiplied {
         println!("{x}");
+    }
+    // we can also unwrap the wrapped iterator:
+    let mut unwrapped = Multiplier(0, 3).into_wrapped(&vec).unwrap();
+    while let Some(multiplied) = unwrapped.next(&vec) {
+        println!("{multiplied}");
     }
 }
 
