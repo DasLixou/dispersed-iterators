@@ -31,9 +31,12 @@ impl DispersedIterator for Indices {
     }
 }
 
-struct TextByIndexMut(Indices);
+struct TextByIndexMut<I>(I);
 
-impl DispersedIterator for TextByIndexMut {
+impl<I> DispersedIterator for TextByIndexMut<I>
+where
+    I: for<'a> DispersedIterator<Item<'a> = &'a i32, Part<'a> = &'a Container>,
+{
     type Item<'a> = &'a String;
     type Part<'a> = &'a mut Container;
 
