@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use dispersed_iterators::DispersedIterator;
+use dispersed_iterators::DispersedIter;
 
 fn main() {
     let mut container = Container {
@@ -20,7 +20,7 @@ struct Container {
 
 struct Indices(usize);
 
-impl DispersedIterator for Indices {
+impl DispersedIter for Indices {
     type Item<'a> = &'a i32;
     type Part<'a> = &'a Container;
 
@@ -33,9 +33,9 @@ impl DispersedIterator for Indices {
 
 struct TextByIndexMut<I>(I);
 
-impl<I> DispersedIterator for TextByIndexMut<I>
+impl<I> DispersedIter for TextByIndexMut<I>
 where
-    I: for<'a> DispersedIterator<Item<'a> = &'a i32, Part<'a> = &'a Container>,
+    I: for<'a> DispersedIter<Item<'a> = &'a i32, Part<'a> = &'a Container>,
 {
     type Item<'a> = &'a String;
     type Part<'a> = &'a mut Container;

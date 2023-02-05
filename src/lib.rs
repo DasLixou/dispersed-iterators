@@ -1,4 +1,4 @@
-pub trait DispersedIterator {
+pub trait DispersedIter {
     type Item<'a>;
     type Part<'a>;
 
